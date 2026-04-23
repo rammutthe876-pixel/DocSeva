@@ -1,6 +1,6 @@
 "use client";
 
-import { Pocket, Calendar, ShieldAlert, CheckCircle2, Info, AlertTriangle } from "lucide-react";
+import { Zap, Calendar, ShieldAlert, CheckCircle2, Info, AlertTriangle } from "lucide-react";
 import { PocketBrief } from "@/lib/types";
 
 interface PocketBriefCardProps {
@@ -24,7 +24,7 @@ export function PocketBriefCard({ brief }: PocketBriefCardProps) {
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-brand/10 p-2 text-brand">
-            <Pocket size={20} />
+            <Zap size={20} />
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand">Quick Recap</p>
