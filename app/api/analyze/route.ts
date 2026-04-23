@@ -153,10 +153,14 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
   const genAI = new GoogleGenerativeAI(cleanKey);
   
   const modelNames = [
-    "models/gemini-1.5-flash",
-    "models/gemini-1.5-pro",
+    "gemini-flash-latest",
+    "models/gemini-flash-latest",
+    "gemini-2.5-flash",
+    "models/gemini-2.5-flash",
     "gemini-1.5-flash",
+    "models/gemini-1.5-flash",
     "gemini-1.5-pro",
+    "models/gemini-1.5-pro",
     "gemini-pro"
   ];
   
@@ -170,13 +174,13 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
         const text = result.response.text();
         if (text) return text;
       } catch (e) {
-        console.warn(`SDK Fail: ${modelName}`);
+        console.warn(`SDK Fail: ${modelName}`, e);
       }
     }
   }
 
   // Last ditch Fetch attempt
-  for (const modelName of ["gemini-1.5-flash", "gemini-pro"]) {
+  for (const modelName of ["gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-pro"]) {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`, {
         method: "POST",
@@ -193,57 +197,7 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
     }
   }
 
-  // INTELLIGENT FALLBACK: Returns realistic data based on the user's category if API is down
-  console.error("All Gemini models failed. Activating Context-Aware Fallback...");
-  
-  const isGovernment = hint?.toLowerCase().includes("government") || hint?.toLowerCase().includes("ncl") || hint?.toLowerCase().includes("criminal");
-  
-  if (isGovernment) {
-    return JSON.stringify({
-      document_type: "Government Certificate (NCL)",
-      document_title: "Non-Creamy Layer Certificate 2024",
-      issued_date: "2024-03-20",
-      expiry_date: "2025-03-19",
-      summary_simple: "This is a valid Non-Creamy Layer (NCL) certificate. It confirms your eligibility for reservation benefits under the government guidelines for the current financial year.",
-      summary_detailed: "The certificate has been issued by the Competent Authority after verifying income records for the last three financial years. It is valid for all central and state government admissions and recruitment processes until the expiry date.",
-      key_terms_and_conditions: [
-        "Valid for current financial year only",
-        "Subject to verification of original records",
-        "Transferable only within the specified jurisdiction"
-      ],
-      important_dates: [
-        { type: "expiry", date: "2025-03-19", description: "Certificate validity expiration" },
-        { type: "renewal", date: "2025-02-01", description: "Recommended date to apply for renewal" }
-      ],
-      payment_schedule: [],
-      alerts: [
-        { priority: "high", message: "Ensure you renew this certificate before March 2025 for next year's admissions." }
-      ],
-      risks_and_warnings: [
-        "Invalid if income criteria changes mid-year.",
-        "Any false declaration can lead to immediate cancellation."
-      ],
-      language: "English"
-    });
-  }
-
-  return JSON.stringify({
-    document_type: "Insurance Policy (Analysis Active)",
-    document_title: "Policy #DS-2024-SECURE",
-    issued_date: "2024-01-10",
-    expiry_date: "2025-01-09",
-    summary_simple: "This is a comprehensive insurance document. Your coverage is currently active. The policy includes medical protection, accident coverage, and 24/7 support.",
-    summary_detailed: "Detailed analysis of your policy terms shows a total sum insured of ₹10,00,000. It covers pre-existing diseases after a 2-year waiting period. Cashless facility is available at major network hospitals.",
-    key_terms_and_conditions: ["24/7 Roadside Assistance", "No Claim Bonus: 15%", "Cashless Hospitalization"],
-    important_dates: [
-      { type: "renewal", date: "2025-01-09", description: "Policy renewal deadline" },
-      { type: "payment", date: "2024-07-10", description: "Mid-term premium payment" }
-    ],
-    payment_schedule: [{ installment_number: "2", amount: "₹3,450", due_date: "2024-07-10", status: "upcoming" }],
-    alerts: [{ priority: "high", message: "Mid-term premium due in 3 months." }],
-    risks_and_warnings: ["15-day grace period for late payments.", "Coverage excludes intentional self-injury."],
-    language: "English"
-  });
+  throw new Error("All Gemini models failed to analyze the document. Please check your API key and quotas.");
 }
 
 export async function POST(request: Request) {
