@@ -149,9 +149,14 @@ function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
 }
 
 async function generateGeminiContent(apiKey: string, base64: string, promptText: string, isJson: boolean) {
-  // Primary attempt using SDK
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelNames = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-latest"];
+  // Re-ordered to try stable 1.0 models first as per user feedback about 1.5 support
+  const modelNames = [
+    "gemini-pro",
+    "gemini-1.0-pro",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
+  ];
   
   for (const modelName of modelNames) {
     try {
@@ -159,13 +164,14 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
         model: modelName,
         generationConfig: isJson ? { responseMimeType: "application/json" } : {},
       });
+      
       const prompt = [promptText, { inlineData: { data: base64, mimeType: "application/pdf" } }];
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       if (text) return text;
     } catch (sdkError: any) {
-      console.warn(`SDK attempt for ${modelName} failed:`, sdkError.message);
-      // If SDK fails, immediately try a low-level fetch as a "hail mary"
+      console.warn(`Attempt for ${modelName} failed, trying fallback...`);
+      // Direct Fetch Fallback
       try {
         const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
         const response = await fetch(url, {
@@ -179,12 +185,10 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
         const data = await response.json();
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text;
-      } catch (fetchError) {
-        console.error("Fetch fallback failed too:", fetchError);
-      }
+      } catch (e) { /* ignore and try next model */ }
     }
   }
-  throw new Error("All API attempts failed. Please verify your API key is active and supports Gemini 1.5 models.");
+  throw new Error("Critical: No compatible Gemini models found for this API key. Please use a key that supports gemini-1.5-flash or gemini-pro.");
 }
 
 export async function POST(request: Request) {
