@@ -235,7 +235,15 @@ export default function VaultPage() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {displayedDocuments.map((doc) => (
-                <DocCard key={doc.id} document={doc} />
+                <DocCard 
+                  key={doc.id} 
+                  document={doc} 
+                  folders={folders}
+                  onRefresh={() => {
+                    setDocuments(getAllDocuments());
+                    setFolders(getAllFolders());
+                  }}
+                />
               ))}
             </div>
           )}
