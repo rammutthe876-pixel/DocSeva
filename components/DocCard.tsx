@@ -56,9 +56,11 @@ interface DocCardProps {
   document: StoredDocument;
   folders: Folder[];
   onRefresh: () => void;
+  onToggleCompare?: (id: string) => void;
+  isSelectedForCompare?: boolean;
 }
 
-export function DocCard({ document, folders, onRefresh }: DocCardProps) {
+export function DocCard({ document, folders, onRefresh, onToggleCompare, isSelectedForCompare }: DocCardProps) {
   const daysUntil = document.soonestExpiry ? computeDaysUntil(document.soonestExpiry) : null;
   const badge = getBadge(daysUntil);
 
@@ -76,11 +78,26 @@ export function DocCard({ document, folders, onRefresh }: DocCardProps) {
   };
 
   return (
-    <article className="group relative rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 transition hover:-translate-y-1 hover:shadow-lg">
+    <article className={`group relative rounded-[2rem] border p-6 shadow-sm shadow-slate-200/60 transition hover:-translate-y-1 hover:shadow-lg ${
+      isSelectedForCompare ? "border-brand bg-brand/5 ring-2 ring-brand/20" : "border-slate-200 bg-white"
+    }`}>
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
-            {CATEGORY_ICONS[document.category]}
+          <div className="flex items-center gap-3">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
+              {CATEGORY_ICONS[document.category]}
+            </div>
+            {onToggleCompare && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={isSelectedForCompare}
+                  onChange={() => onToggleCompare(document.id)}
+                  className="w-4 h-4 accent-brand"
+                />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-brand">Compare</span>
+              </label>
+            )}
           </div>
           <div>
             <h2 className="line-clamp-2 text-xl font-semibold text-textPrimary">{document.name}</h2>

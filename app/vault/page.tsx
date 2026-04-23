@@ -21,6 +21,8 @@ export default function VaultPage() {
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editFolderName, setEditFolderName] = useState("");
+  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     setDocuments(getAllDocuments());
@@ -64,6 +66,20 @@ export default function VaultPage() {
       deleteFolder(id);
       setFolders(getAllFolders());
       if (selectedFolderId === id) setSelectedFolderId(null);
+    }
+  };
+
+  const handleToggleCompare = (id: string) => {
+    setSelectedDocIds(current => 
+      current.includes(id) 
+        ? current.filter(docId => docId !== id)
+        : current.length < 2 ? [...current, id] : [current[1], id]
+    );
+  };
+
+  const handleCompare = () => {
+    if (selectedDocIds.length === 2) {
+      router.push(`/vault/compare?id1=${selectedDocIds[0]}&id2=${selectedDocIds[1]}`);
     }
   };
 
@@ -112,6 +128,45 @@ export default function VaultPage() {
         </div>
 
         <ReminderPanel documents={documents} onRemindersUpdated={() => setDocuments(getAllDocuments())} />
+
+        {selectedDocIds.length > 0 && (
+          <div className="fixed bottom-10 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex items-center gap-6 rounded-[2rem] border border-brand bg-white p-4 pr-6 shadow-2xl">
+              <div className="flex -space-x-3">
+                {selectedDocIds.map((id) => {
+                  const doc = documents.find(d => d.id === id);
+                  return (
+                    <div key={id} className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-lg shadow-sm">
+                      {doc?.category === "insurance" ? "🛡️" : doc?.category === "credit-card" ? "💳" : "📄"}
+                    </div>
+                  );
+                })}
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-brand">
+                  {selectedDocIds.length} Selected
+                </p>
+                <p className="text-[10px] text-textSecondary">
+                  {selectedDocIds.length === 1 ? "Select 1 more to compare" : "Ready to compare"}
+                </p>
+              </div>
+              {selectedDocIds.length === 2 && (
+                <button 
+                  onClick={handleCompare}
+                  className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-brand/90 hover:scale-105 active:scale-95"
+                >
+                  Compare Now
+                </button>
+              )}
+              <button 
+                onClick={() => setSelectedDocIds([])}
+                className="ml-2 text-textSecondary hover:text-danger"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="mt-12">
           <div className="flex items-center justify-between mb-8">
@@ -244,6 +299,8 @@ export default function VaultPage() {
                   key={doc.id} 
                   document={doc} 
                   folders={folders}
+                  isSelectedForCompare={selectedDocIds.includes(doc.id)}
+                  onToggleCompare={handleToggleCompare}
                   onRefresh={() => {
                     setDocuments(getAllDocuments());
                     setFolders(getAllFolders());

@@ -87,6 +87,17 @@ export interface DocumentReminder {
   label: string;
 }
 
+export interface ComparisonResult {
+  summary: string;
+  differences: {
+    topic: string;
+    documentA: string;
+    documentB: string;
+    winner: "A" | "B" | "unclear";
+  }[];
+  recommendation: string;
+}
+
 export interface StoredDocument {
   id: string;
   name: string;

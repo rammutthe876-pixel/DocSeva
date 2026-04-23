@@ -362,13 +362,50 @@ Return ONLY a valid JSON object with this exact structure:
         const parsed = JSON.parse(cleaned);
         return NextResponse.json(parsed, { status: 200 });
       } catch (error) {
-        // Fallback for non-JSON or malformed responses
         return NextResponse.json({ 
           answer: cleaned || "We could not extract a clear answer.", 
           confidence: "low",
           support: "AI response was not in expected format"
         }, { status: 200 });
       }
+    }
+
+    if (mode === "compare") {
+      const base64B = typeof body.base64B === "string" ? body.base64B : "";
+      if (!base64 || !base64B) {
+        return NextResponse.json({ error: "Two documents are required for comparison." }, { status: 400 });
+      }
+
+      const comparePrompt = `Compare these two documents for a user choosing between them.
+Compare coverage/benefits, obligations, fees, exclusions, deadlines, penalties, and user risk.
+Highlight meaningful differences only. End with a practical recommendation.
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "summary": "short overall comparison",
+  "differences": [
+    {
+      "topic": "Cancellation",
+      "documentA": "short point",
+      "documentB": "short point",
+      "winner": "A / B / unclear"
+    }
+  ],
+  "recommendation": "practical recommendation"
+}
+`;
+
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+      
+      const result = await model.generateContent([
+        comparePrompt,
+        { inlineData: { data: base64, mimeType: "application/pdf" } },
+        { inlineData: { data: base64B, mimeType: "application/pdf" } }
+      ]);
+
+      const rawText = result.response.text();
+      return NextResponse.json(JSON.parse(cleanJsonText(rawText)), { status: 200 });
     }
 
     const prompt = hindi ? HINDI_PROMPT : ENGLISH_PROMPT;
