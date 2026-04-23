@@ -149,62 +149,42 @@ function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
 }
 
 async function generateGeminiContent(apiKey: string, base64: string, promptText: string, isJson: boolean) {
+  // Primary attempt using SDK
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Exhaustive list of potential model names to handle different region/account restrictions
-  const modelNames = [
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest",
-    "gemini-pro"
-  ];
-  let lastError: any;
-
+  const modelNames = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-latest"];
+  
   for (const modelName of modelNames) {
-    const configs = isJson ? [{ responseMimeType: "application/json" }, {}] : [{}];
-    
-    for (const config of configs) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: isJson ? { responseMimeType: "application/json" } : {},
+      });
+      const prompt = [promptText, { inlineData: { data: base64, mimeType: "application/pdf" } }];
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      if (text) return text;
+    } catch (sdkError: any) {
+      console.warn(`SDK attempt for ${modelName} failed:`, sdkError.message);
+      // If SDK fails, immediately try a low-level fetch as a "hail mary"
       try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: config,
+        const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }, { inlineData: { mimeType: "application/pdf", data: base64 } }] }],
+            generationConfig: isJson ? { responseMimeType: "application/json" } : {}
+          })
         });
-
-        const prompt = [
-          promptText,
-          {
-            inlineData: {
-              data: base64,
-              mimeType: "application/pdf"
-            }
-          }
-        ];
-
-        for (let i = 0; i < 2; i++) {
-          try {
-            const result = await model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
-            if (!text) throw new Error("Empty response");
-            return text;
-          } catch (error: any) {
-            lastError = error;
-            const msg = error.message || "";
-            if (msg.includes("503") || msg.includes("Service Unavailable") || msg.includes("overloaded")) {
-              await new Promise(resolve => setTimeout(resolve, 1500));
-              continue;
-            }
-            // If it's a 404 or other non-retryable error, try next config/model
-            break; 
-          }
-        }
-      } catch (error: any) {
-        lastError = error;
-        continue;
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      } catch (fetchError) {
+        console.error("Fetch fallback failed too:", fetchError);
       }
     }
   }
-  throw new Error(`Gemini failure: ${lastError?.message || "Unknown error"}. Please ensure your API key supports Gemini 1.5 models.`);
+  throw new Error("All API attempts failed. Please verify your API key is active and supports Gemini 1.5 models.");
 }
 
 export async function POST(request: Request) {
