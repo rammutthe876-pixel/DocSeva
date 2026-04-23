@@ -8,6 +8,10 @@ import { DocumentSubnav } from "@/components/DocumentSubnav";
 import { HindiToggle } from "@/components/HindiToggle";
 import { MustKnowGrid } from "@/components/MustKnowGrid";
 import { SummaryCard } from "@/components/SummaryCard";
+import { NextActionsPanel } from "@/components/NextActionsPanel";
+import { SafetyScoreCard } from "@/components/SafetyScoreCard";
+import { FraudCheckCard } from "@/components/FraudCheckCard";
+import { FamilyExplanationCard } from "@/components/FamilyExplanationCard";
 import { deleteDocument, getDocument, updateDocument } from "@/lib/storage";
 import { formatDate, getCategoryLabel } from "@/lib/utils";
 import type { StoredDocument } from "@/lib/types";
@@ -157,44 +161,31 @@ export default function DocumentOverviewPage() {
 
         {error ? <p className="mt-4 text-sm font-medium text-danger">{error}</p> : null}
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="mt-8 grid gap-6 xl:grid-cols-3">
           <SummaryCard 
             title={isHindi ? "सरल सारांश" : "Plain-language summary"} 
             summarySimple={activeAnalysis.summary_simple}
             summaryDetailed={activeAnalysis.summary_detailed}
             keyTerms={activeAnalysis.key_terms_and_conditions}
           />
-          <div className="rounded-[2rem] border border-slate-200 bg-[#0f172a] p-6 text-white shadow-sm sm:p-7">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-300">Workspace flow</p>
-            <h2 className="mt-3 font-display text-4xl">Read first, act second.</h2>
-            <p className="mt-3 text-base leading-7 text-slate-300">
-              The overview page is intentionally calm. It explains the document in simple language before asking the user
-              to make sense of dates, clauses, or legal wording.
-            </p>
+          <NextActionsPanel actions={activeAnalysis.next_actions} />
+          <SafetyScoreCard 
+            score={activeAnalysis.trust_score}
+            riskLevel={activeAnalysis.risk_level}
+            reasons={activeAnalysis.safety_reasons}
+          />
+        </div>
 
-            <div className="mt-6 grid gap-4">
-              <Link
-                href={`/document/${document.id}/dates`}
-                className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">Next page</p>
-                <p className="mt-2 text-xl font-semibold text-white">Open deadlines and renewal dates</p>
-              </Link>
-              <Link
-                href={`/document/${document.id}/ask`}
-                className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">Then ask</p>
-                <p className="mt-2 text-xl font-semibold text-white">Get answers tied back to the document</p>
-              </Link>
-            </div>
-          </div>
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <FraudCheckCard check={activeAnalysis.fraud_check} />
+          <FamilyExplanationCard explanation={activeAnalysis.family_explanation} />
         </div>
 
         <div className="mt-6">
           <MustKnowGrid 
             alerts={activeAnalysis.alerts} 
             risks={activeAnalysis.risks_and_warnings} 
+            mustKnow={activeAnalysis.must_know}
             isHindi={isHindi} 
           />
         </div>

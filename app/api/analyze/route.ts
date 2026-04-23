@@ -14,14 +14,17 @@ Return ONLY a valid JSON object with this exact structure — no markdown, no ex
   "document_title": "string",
   "issued_date": "YYYY-MM-DD or Not Found",
   "expiry_date": "YYYY-MM-DD or Not Found",
-  "summary_simple": "string (Explain like the user is a beginner - very easy language)",
-  "summary_detailed": "string (Include more context but still readable)",
+  "summary_simple": "string (A plain-language summary for a normal user. Write exactly 5 short, clear, and meaningful bullet points joined by newlines. Focus on what this document is, what it does, what the user should know, and what may matter later. Avoid repeating the same idea. Do not use legal jargon unless necessary. If something is uncertain, say so briefly.)",
+  "summary_detailed": "string (A more context-rich version of the 5 bullets above, still in clear language.)",
   "key_terms_and_conditions": ["string", "string"],
   "important_dates": [
     {
-      "type": "payment / renewal / deadline",
-      "date": "YYYY-MM-DD",
-      "description": "string"
+      "label": "Renewal due date",
+      "rawText": "Premium must be paid before 14 June 2026",
+      "normalizedDate": "2026-06-14",
+      "meaning": "Last date to pay premium before renewal lapse",
+      "missedConsequence": "Policy may enter a grace period and later lapse if payment is not made.",
+      "confidence": "high"
     }
   ],
   "payment_schedule": [
@@ -39,16 +42,58 @@ Return ONLY a valid JSON object with this exact structure — no markdown, no ex
     }
   ],
   "risks_and_warnings": ["string", "string"],
+  "must_know": [
+    {
+      "title": "short risk title",
+      "explanation": "clear explanation",
+      "severity": "low / medium / high",
+      "confidence": "low / medium / high"
+    }
+  ],
+  "next_actions": [
+    {
+      "action": "Pay the premium before 14 June 2026",
+      "reason": "Missing this may interrupt coverage",
+      "priority": "high"
+    }
+  ],
+  "trust_score": 72,
+  "risk_level": "low / medium / high",
+  "safety_reasons": [
+    "The payment obligations are clearly stated.",
+    "The exclusions section is broad and may limit claims.",
+    "The cancellation terms are not explained clearly."
+  ],
+  "fraud_check": {
+    "status": "clean / review / suspicious",
+    "findings": [
+      {
+        "issue": "Issuer identity is not clearly stated",
+        "whyItMatters": "This makes the document harder to verify",
+        "severity": "medium"
+      }
+    ]
+  },
+  "family_explanation": {
+    "whatThisIs": "This is a health insurance policy.",
+    "whatYouMustDo": "Pay the premium on time and keep your policy details safe.",
+    "whatToBeCarefulAbout": "Some illnesses and situations may not be covered.",
+    "mostImportantDate": "14 June 2026"
+  },
   "language": "English"
 }
 
 Rules:
-1. DATE EXTRACTION: Identify all relevant dates (start date, maturity, deadlines, premium dates). Normalize all dates to YYYY-MM-DD.
-2. SMART DEADLINE DETECTION: Detect recurring payments (monthly, quarterly, yearly). Infer schedule if not explicitly listed.
-3. TERMS & CONDITIONS: Extract only important clauses. Convert legal jargon into plain language.
-4. RISK DETECTION: Highlight penalties, late fees, cancellation risks, hidden clauses.
-5. ALERT GENERATION: Create actionable alerts (e.g., "Next premium due in 5 days"). Prioritize based on urgency.
-6. ERROR HANDLING: If data is missing, return "Not Found" or empty arrays instead of guessing. Do NOT fabricate information.`;
+1. FAMILY-FRIENDLY EXPLANATION: Explain the document as if you are speaking to a family member who is not familiar with legal or financial language. Use very simple language. Keep the tone calm and practical. Explain what the document is, what the user has to do, what to be careful about, and what date to remember. Avoid jargon. Keep it short and trustworthy.
+2. FRAUD & SUSPICIOUS PATTERN REVIEW: Review for suspicious, deceptive, manipulative, or unusually risky patterns. Look for missing issuer details, vague payment instructions, one-sided liability, unclear penalty structures, unusual urgency, inconsistent formatting, unverifiable contact details. Separate "suspicious" from "needs human review".
+3. CONSUMER SAFETY EVALUATION: Score the document from 0 to 100 for safety and clarity. Higher is better. A higher score means clearer, safer, and lower-risk for the user. Consider clarity, transparency, penalties, exclusions, balance of obligations, suspicious ambiguity, and missing information. Do not treat all legal complexity as fraud. Be fair and evidence-based. Provide exactly 3 reasons.
+4. NEXT ACTIONS: Identify the most useful next actions. Return exactly 3. Actions must be practical and specific. Prioritize urgent deadlines, missing checks, risky clauses, verification needs.
+5. MUST KNOW RISKS: Identify the most important risks, traps, or caution points. Return exactly 3 risk points. Focus on penalties, exclusions, hidden charges, one-sided terms, cancellation conditions, waiting periods, claim rejection triggers, deadlines, or ambiguous wording.
+6. DATE EXTRACTION: Extract all important dates and date-related obligations. For each date, explain what may happen if the user misses it (missedConsequence). Focus on practical consequences: penalties, lapse, service interruption, rejection risk, extra fees, loss of coverage, or delayed processing. Normalize all dates to YYYY-MM-DD.
+7. SMART DEADLINE DETECTION: Detect recurring payments (monthly, quarterly, yearly). Infer schedule if not explicitly listed.
+8. TERMS & CONDITIONS: Extract only important clauses. Convert legal jargon into plain language.
+9. RISK DETECTION: Highlight penalties, late fees, cancellation risks, hidden clauses.
+10. ERROR HANDLING: If data is missing, return "Not Found" or empty arrays instead of guessing. Do NOT fabricate information.`;
 
 const HINDI_PROMPT = `You are DocSeva, an advanced AI-powered Document Intelligence System.
 Analyze the following document (e.g., insurance policy, legal agreement, contract, financial document).
@@ -66,9 +111,12 @@ Return ONLY a valid JSON object with this exact structure — no markdown, no ex
   "key_terms_and_conditions": ["string", "string"],
   "important_dates": [
     {
-      "type": "payment / renewal / deadline",
-      "date": "YYYY-MM-DD",
-      "description": "string"
+      "label": "नविकरण की तारीख (Renewal due date)",
+      "rawText": "Premium must be paid before 14 June 2026",
+      "normalizedDate": "2026-06-14",
+      "meaning": "पॉलिसी जारी रखने के लिए प्रीमियम भरने की अंतिम तारीख",
+      "missedConsequence": "पॉलिसी बंद हो सकती है और कवर खत्म हो सकता है।",
+      "confidence": "high"
     }
   ],
   "payment_schedule": [
@@ -86,16 +134,53 @@ Return ONLY a valid JSON object with this exact structure — no markdown, no ex
     }
   ],
   "risks_and_warnings": ["string", "string"],
+  "must_know": [
+    {
+      "title": "जोखिम का शीर्षक",
+      "explanation": "स्पष्ट विवरण",
+      "severity": "low / medium / high",
+      "confidence": "low / medium / high"
+    }
+  ],
+  "next_actions": [
+    {
+      "action": "14 जून 2026 से पहले प्रीमियम भरें",
+      "reason": "देरी होने पर कवर रुक सकता है",
+      "priority": "high"
+    }
+  ],
+  "trust_score": 72,
+  "risk_level": "low / medium / high",
+  "safety_reasons": [
+    "भुगतान की शर्तें स्पष्ट हैं।",
+    "छूट अनुभाग बहुत व्यापक है।",
+    "रद्दीकरण की शर्तें स्पष्ट नहीं हैं।"
+  ],
+  "fraud_check": {
+    "status": "clean / review / suspicious",
+    "findings": [
+      {
+        "issue": "जारीकर्ता की पहचान स्पष्ट नहीं है",
+        "whyItMatters": "इसे सत्यापित करना कठिन है",
+        "severity": "medium"
+      }
+    ]
+  },
+  "family_explanation": {
+    "whatThisIs": "यह एक स्वास्थ्य बीमा पॉलिसी है।",
+    "whatYouMustDo": "समय पर प्रीमियम भरें और कागज संभाल कर रखें।",
+    "whatToBeCarefulAbout": "कुछ बीमारियां शायद इसमें कवर न हों।",
+    "mostImportantDate": "14 जून 2026"
+  },
   "language": "Hindi"
 }
 
 Rules:
-1. All text fields must be translated to natural, human-friendly Hindi.
-2. DATE EXTRACTION: Identify all relevant dates. Normalize all dates to YYYY-MM-DD.
-3. SMART DEADLINE DETECTION: Detect recurring payments.
-4. TERMS & CONDITIONS: Extract only important clauses. Convert legal jargon into plain Hindi.
-5. RISK DETECTION: Highlight penalties, late fees, cancellation risks.
-6. ERROR HANDLING: If data is missing, return "Not Found" or empty arrays. Do NOT fabricate information.`;
+1. NATURAL HINDI: Do not perform literal legal translation. Use simple, natural Hindi that a common person can understand. 
+2. FAITHFUL MEANING: Keep the meaning faithful to the document. 
+3. FOCUS: Prioritize summary, risks, actions, and dates.
+4. CONSUMER SAFETY: Evaluate the document honestly for a Hindi-speaking user.
+5. ERROR HANDLING: If data is missing, return "Not Found" or empty arrays. Do NOT fabricate information.`;
 
 function cleanJsonText(text: string): string {
   return text
@@ -109,14 +194,17 @@ function cleanJsonText(text: string): string {
 function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
   const important_dates = Array.isArray(raw.important_dates)
     ? raw.important_dates.map((item: any) => {
-        const date = String(item?.date ?? "");
+        const date = item?.normalizedDate ? String(item.normalizedDate) : null;
         return {
-          type: String(item?.type ?? "deadline"),
-          date,
-          description: String(item?.description ?? ""),
-          daysUntil: computeDaysUntil(date)
+          label: String(item?.label || "Deadline"),
+          rawText: String(item?.rawText || ""),
+          date: date,
+          meaning: String(item?.meaning || ""),
+          missedConsequence: String(item?.missedConsequence || "Not clearly stated in the document."),
+          confidence: (item?.confidence === "high" || item?.confidence === "medium" || item?.confidence === "low") ? item.confidence : "medium",
+          daysUntil: date ? computeDaysUntil(date) : null
         };
-      }).filter((item) => !Number.isNaN(item.daysUntil))
+      })
     : [];
 
   const payment_schedule = Array.isArray(raw.payment_schedule)
@@ -144,6 +232,34 @@ function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
     payment_schedule,
     alerts: Array.isArray(raw.alerts) ? raw.alerts.map((a: any) => ({ priority: String(a?.priority || "medium"), message: String(a?.message || "") })) : [],
     risks_and_warnings: Array.isArray(raw.risks_and_warnings) ? raw.risks_and_warnings.map(String) : [],
+    must_know: Array.isArray(raw.must_know) ? raw.must_know.map((m: any) => ({
+      title: String(m?.title || ""),
+      explanation: String(m?.explanation || ""),
+      severity: (m?.severity === "high" || m?.severity === "medium" || m?.severity === "low") ? m.severity : "medium",
+      confidence: (m?.confidence === "high" || m?.confidence === "medium" || m?.confidence === "low") ? m.confidence : "medium"
+    })) : [],
+    next_actions: Array.isArray(raw.next_actions) ? raw.next_actions.map((n: any) => ({
+      action: String(n?.action || ""),
+      reason: String(n?.reason || ""),
+      priority: (n?.priority === "high" || n?.priority === "medium" || n?.priority === "low") ? n.priority : "medium"
+    })) : [],
+    trust_score: typeof raw.trust_score === "number" ? raw.trust_score : 50,
+    risk_level: (raw.risk_level === "high" || raw.risk_level === "medium" || raw.risk_level === "low") ? raw.risk_level : "medium",
+    safety_reasons: Array.isArray(raw.safety_reasons) ? raw.safety_reasons.map(String) : [],
+    fraud_check: {
+      status: (raw.fraud_check as any)?.status === "suspicious" ? "suspicious" : (raw.fraud_check as any)?.status === "review" ? "review" : "clean",
+      findings: Array.isArray((raw.fraud_check as any)?.findings) ? (raw.fraud_check as any).findings.map((f: any) => ({
+        issue: String(f?.issue || ""),
+        whyItMatters: String(f?.whyItMatters || ""),
+        severity: (f?.severity === "high" || f?.severity === "medium" || f?.severity === "low") ? f.severity : "medium"
+      })) : []
+    },
+    family_explanation: {
+      whatThisIs: String((raw.family_explanation as any)?.whatThisIs || ""),
+      whatYouMustDo: String((raw.family_explanation as any)?.whatYouMustDo || ""),
+      whatToBeCarefulAbout: String((raw.family_explanation as any)?.whatToBeCarefulAbout || ""),
+      mostImportantDate: String((raw.family_explanation as any)?.mostImportantDate || "")
+    },
     language: String(raw.language || "English")
   };
 }
@@ -222,10 +338,37 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Question is required." }, { status: 400 });
       }
 
-      const qaPrompt = `Answer this question based ONLY on the document provided: ${question}.`;
-      const answer = await generateGeminiContent(process.env.GEMINI_API_KEY!, base64, qaPrompt, false, category);
+      const qaPrompt = `Answer the user’s question using ONLY the document provided.
+Question: ${question}
 
-      return NextResponse.json({ answer }, { status: 200 });
+Instructions:
+- Answer only from the document.
+- If the answer is not clearly available, say that clearly.
+- Be direct and practical.
+- Quote or refer to the supporting part briefly if possible.
+- Do not invent clauses.
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "answer": "your answer here",
+  "confidence": "low|medium|high",
+  "support": "short supporting reference from the document or explanation that it was not clearly found"
+}
+`;
+      const rawText = await generateGeminiContent(process.env.GEMINI_API_KEY!, base64, qaPrompt, true, category);
+      const cleaned = cleanJsonText(rawText);
+      
+      try {
+        const parsed = JSON.parse(cleaned);
+        return NextResponse.json(parsed, { status: 200 });
+      } catch (error) {
+        // Fallback for non-JSON or malformed responses
+        return NextResponse.json({ 
+          answer: cleaned || "We could not extract a clear answer.", 
+          confidence: "low",
+          support: "AI response was not in expected format"
+        }, { status: 200 });
+      }
     }
 
     const prompt = hindi ? HINDI_PROMPT : ENGLISH_PROMPT;

@@ -6,10 +6,13 @@ export interface Folder {
 }
 
 export interface ExtractedDate {
-  type: string;
-  date: string;
-  description: string;
-  daysUntil: number; // Computed locally
+  label: string;
+  rawText: string;
+  date: string | null; // This will be the normalizedDate
+  meaning: string;
+  missedConsequence: string;
+  confidence: "low" | "medium" | "high";
+  daysUntil: number | null; // Computed locally
 }
 
 export interface PaymentInstallment {
@@ -25,6 +28,37 @@ export interface DocumentAlert {
   message: string;
 }
 
+export interface MustKnowRisk {
+  title: string;
+  explanation: string;
+  severity: "low" | "medium" | "high";
+  confidence: "low" | "medium" | "high";
+}
+
+export interface NextAction {
+  action: string;
+  reason: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface FraudFinding {
+  issue: string;
+  whyItMatters: string;
+  severity: "low" | "medium" | "high";
+}
+
+export interface FraudCheck {
+  status: "clean" | "review" | "suspicious";
+  findings: FraudFinding[];
+}
+
+export interface FamilySafeExplanation {
+  whatThisIs: string;
+  whatYouMustDo: string;
+  whatToBeCarefulAbout: string;
+  mostImportantDate: string;
+}
+
 export interface DocumentAnalysis {
   document_type: string;
   document_title: string;
@@ -37,6 +71,13 @@ export interface DocumentAnalysis {
   payment_schedule: PaymentInstallment[];
   alerts: DocumentAlert[];
   risks_and_warnings: string[];
+  must_know: MustKnowRisk[];
+  next_actions: NextAction[];
+  trust_score: number;
+  risk_level: "low" | "medium" | "high";
+  safety_reasons: string[];
+  fraud_check: FraudCheck;
+  family_explanation: FamilySafeExplanation;
   language: string;
 }
 

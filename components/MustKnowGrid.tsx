@@ -1,13 +1,14 @@
-import type { DocumentAlert } from "@/lib/types";
+import type { DocumentAlert, MustKnowRisk } from "@/lib/types";
 
 interface MustKnowGridProps {
   alerts: DocumentAlert[];
   risks: string[];
+  mustKnow?: MustKnowRisk[];
   isHindi?: boolean;
 }
 
-export function MustKnowGrid({ alerts, risks, isHindi = false }: MustKnowGridProps) {
-  if (alerts.length === 0 && risks.length === 0) return null;
+export function MustKnowGrid({ alerts, risks, mustKnow = [], isHindi = false }: MustKnowGridProps) {
+  if (alerts.length === 0 && risks.length === 0 && mustKnow.length === 0) return null;
 
   return (
     <section className="space-y-6">
@@ -52,7 +53,51 @@ export function MustKnowGrid({ alerts, risks, isHindi = false }: MustKnowGridPro
         </div>
       )}
 
-      {risks.length > 0 && (
+      {mustKnow.length > 0 && (
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-warning">
+                {isHindi ? "सावधानी" : "Risk Radar"}
+              </p>
+              <h2 className="mt-2 font-display text-3xl text-textPrimary">
+                {isHindi ? "ज़रूर जानें" : "Must know before you act"}
+              </h2>
+            </div>
+            <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-warning">
+              {mustKnow.length} risks
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {mustKnow.map((item, index) => (
+              <article
+                key={`mustknow-${index}`}
+                className="flex flex-col rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    item.severity === 'high' ? 'bg-red-100 text-red-600' : 
+                    item.severity === 'medium' ? 'bg-amber-100 text-amber-600' : 
+                    'bg-sky-100 text-sky-600'
+                  }`}>
+                    {item.severity} severity
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    {item.confidence} confidence
+                  </span>
+                </div>
+                <h3 className="font-display text-lg font-semibold text-slate-900 leading-tight">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.explanation}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {risks.length > 0 && mustKnow.length === 0 && (
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
