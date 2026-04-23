@@ -9,11 +9,14 @@ interface QAItem {
   support: string;
 }
 
+import { Send, Loader2, MessageSquare } from "lucide-react";
+
 interface QAPanelProps {
   base64: string;
+  recommendedQuestions?: string[];
 }
 
-export function QAPanel({ base64 }: QAPanelProps) {
+export function QAPanel({ base64, recommendedQuestions = [] }: QAPanelProps) {
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<QAItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +99,26 @@ export function QAPanel({ base64 }: QAPanelProps) {
           {isLoading ? "Thinking…" : "Ask Question"}
         </button>
       </form>
+
+      {recommendedQuestions.length > 0 && history.length === 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="text-brand" size={18} />
+            <h3 className="font-display text-xl text-textPrimary">Suggested for you</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recommendedQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                onClick={() => setQuestion(q)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-textPrimary transition hover:border-brand/40 hover:bg-brand/5 active:scale-95"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error ? <p className="mt-4 text-sm font-medium text-danger">{error}</p> : null}
 

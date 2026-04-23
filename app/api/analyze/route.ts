@@ -80,20 +80,46 @@ Return ONLY a valid JSON object with this exact structure — no markdown, no ex
     "whatToBeCarefulAbout": "Some illnesses and situations may not be covered.",
     "mostImportantDate": "14 June 2026"
   },
+  "claim_readiness": {
+    "likelyNeeded": ["ID proof", "policy number", "hospital bills"],
+    "deadlines": ["Claim must be filed within 30 days if stated"],
+    "rejectionRisks": ["Missing supporting documents may delay or reject the claim"]
+  },
+  "pocket_brief": {
+    "whatItIs": "Health Policy",
+    "whatToDo": "Keep premium paid",
+    "nextDate": "2026-06-14",
+    "mainRisk": "No coverage for pre-existing diseases",
+    "status": "safe"
+  },
+  "missing_info": [
+    {
+      "issue": "The issuer contact details are not clearly visible",
+      "whyItMatters": "Difficult to verify or seek support",
+      "severity": "medium"
+    }
+  ],
+  "recommended_questions": [
+    "What happens if I miss the payment date?",
+    "What is not covered in this document?",
+    "Can this be cancelled early?",
+    "What is the most important deadline here?"
+  ],
   "language": "English"
 }
 
 Rules:
-1. FAMILY-FRIENDLY EXPLANATION: Explain the document as if you are speaking to a family member who is not familiar with legal or financial language. Use very simple language. Keep the tone calm and practical. Explain what the document is, what the user has to do, what to be careful about, and what date to remember. Avoid jargon. Keep it short and trustworthy.
-2. FRAUD & SUSPICIOUS PATTERN REVIEW: Review for suspicious, deceptive, manipulative, or unusually risky patterns. Look for missing issuer details, vague payment instructions, one-sided liability, unclear penalty structures, unusual urgency, inconsistent formatting, unverifiable contact details. Separate "suspicious" from "needs human review".
-3. CONSUMER SAFETY EVALUATION: Score the document from 0 to 100 for safety and clarity. Higher is better. A higher score means clearer, safer, and lower-risk for the user. Consider clarity, transparency, penalties, exclusions, balance of obligations, suspicious ambiguity, and missing information. Do not treat all legal complexity as fraud. Be fair and evidence-based. Provide exactly 3 reasons.
-4. NEXT ACTIONS: Identify the most useful next actions. Return exactly 3. Actions must be practical and specific. Prioritize urgent deadlines, missing checks, risky clauses, verification needs.
-5. MUST KNOW RISKS: Identify the most important risks, traps, or caution points. Return exactly 3 risk points. Focus on penalties, exclusions, hidden charges, one-sided terms, cancellation conditions, waiting periods, claim rejection triggers, deadlines, or ambiguous wording.
-6. DATE EXTRACTION: Extract all important dates and date-related obligations. For each date, explain what may happen if the user misses it (missedConsequence). Focus on practical consequences: penalties, lapse, service interruption, rejection risk, extra fees, loss of coverage, or delayed processing. Normalize all dates to YYYY-MM-DD.
-7. SMART DEADLINE DETECTION: Detect recurring payments (monthly, quarterly, yearly). Infer schedule if not explicitly listed.
-8. TERMS & CONDITIONS: Extract only important clauses. Convert legal jargon into plain language.
-9. RISK DETECTION: Highlight penalties, late fees, cancellation risks, hidden clauses.
-10. ERROR HANDLING: If data is missing, return "Not Found" or empty arrays instead of guessing. Do NOT fabricate information.`;
+1. POCKET BRIEF: Generate a compact pocket brief. Focus only on what matters most.
+2. MISSING INFORMATION: Identify what important information appears to be missing, unclear, incomplete, or hard to verify. Focus on missing dates, vague obligations, incomplete identity details.
+3. RECOMMENDED QUESTIONS: Generate exactly 4 useful follow-up questions a normal user should ask to uncover risk, deadlines, and consequences.
+4. CLAIM READINESS: Identify required documents and rejection risks for future submissions.
+5. FAMILY-FRIENDLY EXPLANATION: Explain simply for a family member.
+6. FRAUD & SUSPICIOUS PATTERN REVIEW: Review for deceptive patterns.
+7. CONSUMER SAFETY EVALUATION: Score 0-100 for safety and clarity.
+8. NEXT ACTIONS: Identify exactly 3 practical next actions.
+9. MUST KNOW RISKS: Identify exactly 3 important risks or traps.
+10. DATE EXTRACTION: Extract all important dates and consequences. Normalize to YYYY-MM-DD.
+11. ERROR HANDLING: If data is missing, return empty arrays. Do NOT fabricate information.`;
 
 const HINDI_PROMPT = `You are DocSeva, an advanced AI-powered Document Intelligence System.
 Analyze the following document (e.g., insurance policy, legal agreement, contract, financial document).
@@ -260,6 +286,24 @@ function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
       whatToBeCarefulAbout: String((raw.family_explanation as any)?.whatToBeCarefulAbout || ""),
       mostImportantDate: String((raw.family_explanation as any)?.mostImportantDate || "")
     },
+    claim_readiness: {
+      likelyNeeded: Array.isArray((raw.claim_readiness as any)?.likelyNeeded) ? (raw.claim_readiness as any).likelyNeeded.map(String) : [],
+      deadlines: Array.isArray((raw.claim_readiness as any)?.deadlines) ? (raw.claim_readiness as any).deadlines.map(String) : [],
+      rejectionRisks: Array.isArray((raw.claim_readiness as any)?.rejectionRisks) ? (raw.claim_readiness as any).rejectionRisks.map(String) : []
+    },
+    pocket_brief: {
+      whatItIs: String((raw.pocket_brief as any)?.whatItIs || ""),
+      whatToDo: String((raw.pocket_brief as any)?.whatToDo || ""),
+      nextDate: (raw.pocket_brief as any)?.nextDate ? String((raw.pocket_brief as any).nextDate) : null,
+      mainRisk: String((raw.pocket_brief as any)?.mainRisk || ""),
+      status: (raw.pocket_brief as any)?.status === "urgent" ? "urgent" : (raw.pocket_brief as any)?.status === "watch" ? "watch" : "safe"
+    },
+    missing_info: Array.isArray(raw.missing_info) ? raw.missing_info.map((m: any) => ({
+      issue: String(m?.issue || ""),
+      whyItMatters: String(m?.whyItMatters || ""),
+      severity: (m?.severity === "high" || m?.severity === "medium" || m?.severity === "low") ? m.severity : "medium"
+    })) : [],
+    recommended_questions: Array.isArray(raw.recommended_questions) ? raw.recommended_questions.map(String).slice(0, 4) : [],
     language: String(raw.language || "English")
   };
 }

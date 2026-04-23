@@ -59,6 +59,26 @@ export interface FamilySafeExplanation {
   mostImportantDate: string;
 }
 
+export interface ClaimReadiness {
+  likelyNeeded: string[];
+  deadlines: string[];
+  rejectionRisks: string[];
+}
+
+export interface PocketBrief {
+  whatItIs: string;
+  whatToDo: string;
+  nextDate: string | null;
+  mainRisk: string;
+  status: "safe" | "watch" | "urgent";
+}
+
+export interface MissingInfoItem {
+  issue: string;
+  whyItMatters: string;
+  severity: "high" | "medium" | "low";
+}
+
 export interface DocumentAnalysis {
   document_type: string;
   document_title: string;
@@ -78,6 +98,10 @@ export interface DocumentAnalysis {
   safety_reasons: string[];
   fraud_check: FraudCheck;
   family_explanation: FamilySafeExplanation;
+  claim_readiness: ClaimReadiness;
+  pocket_brief: PocketBrief;
+  missing_info: MissingInfoItem[];
+  recommended_questions: string[];
   language: string;
 }
 

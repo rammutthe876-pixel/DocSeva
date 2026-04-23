@@ -80,7 +80,10 @@ export default function DocumentAskPage() {
             </div>
           </section>
 
-          <QAPanel base64={document.fileBase64} />
+          <QAPanel 
+            base64={document.fileBase64} 
+            recommendedQuestions={document.analysis.recommended_questions} 
+          />
         </div>
       </section>
     </main>

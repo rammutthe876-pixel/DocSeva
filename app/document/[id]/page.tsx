@@ -12,6 +12,9 @@ import { NextActionsPanel } from "@/components/NextActionsPanel";
 import { SafetyScoreCard } from "@/components/SafetyScoreCard";
 import { FraudCheckCard } from "@/components/FraudCheckCard";
 import { FamilyExplanationCard } from "@/components/FamilyExplanationCard";
+import { ClaimReadinessCard } from "@/components/ClaimReadinessCard";
+import { PocketBriefCard } from "@/components/PocketBriefCard";
+import { MissingInfoCard } from "@/components/MissingInfoCard";
 import { deleteDocument, getDocument, updateDocument } from "@/lib/storage";
 import { formatDate, getCategoryLabel } from "@/lib/utils";
 import type { StoredDocument } from "@/lib/types";
@@ -176,9 +179,15 @@ export default function DocumentOverviewPage() {
           />
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        <div className="mt-6 grid gap-6 xl:grid-cols-3">
           <FraudCheckCard check={activeAnalysis.fraud_check} />
           <FamilyExplanationCard explanation={activeAnalysis.family_explanation} />
+          <ClaimReadinessCard data={activeAnalysis.claim_readiness} />
+        </div>
+        
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <PocketBriefCard brief={activeAnalysis.pocket_brief} />
+          <MissingInfoCard items={activeAnalysis.missing_info} />
         </div>
 
         <div className="mt-6">
