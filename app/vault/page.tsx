@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { DocCard } from "@/components/DocCard";
 import { getAllDocuments, getAllFolders, saveFolder, deleteFolder, updateFolder } from "@/lib/storage";

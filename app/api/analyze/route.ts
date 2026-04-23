@@ -322,7 +322,7 @@ export async function POST(request: Request) {
     const base64 = typeof body.base64 === "string" ? body.base64 : "";
     const category = body.category || "";
     const hindi = Boolean(body.hindi);
-    const mode = body.mode === "qa" ? "qa" : "analysis";
+    const mode = body.mode === "qa" ? "qa" : body.mode === "compare" ? "compare" : "analysis";
     const question = typeof body.question === "string" ? body.question.trim() : "";
 
     if (!process.env.GEMINI_API_KEY) {

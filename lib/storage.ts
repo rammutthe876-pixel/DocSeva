@@ -93,6 +93,7 @@ function computeSoonestExpiry(dates: ExtractedDate[], reminders?: DocumentRemind
 
   const validDates = allDates
     .map((dateStr) => {
+      if (!dateStr) return null;
       const date = new Date(dateStr);
       return Number.isNaN(date.getTime()) ? null : dateStr;
     })
@@ -115,12 +116,12 @@ function computeSoonestExpiry(dates: ExtractedDate[], reminders?: DocumentRemind
 function withComputedFields(doc: StoredDocument): StoredDocument {
   const important_dates = (doc.analysis.important_dates ?? []).map((item) => ({
     ...item,
-    daysUntil: computeDaysUntil(item.date)
+    daysUntil: computeDaysUntil(item.date ?? "")
   }));
 
   const payment_schedule = (doc.analysis.payment_schedule ?? []).map((item) => ({
     ...item,
-    daysUntil: computeDaysUntil(item.due_date)
+    daysUntil: computeDaysUntil(item.due_date ?? "")
   }));
 
   const combinedDatesForExpiry = [

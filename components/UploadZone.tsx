@@ -85,13 +85,13 @@ export function UploadZone() {
       let minDays = Infinity;
       
       data.analysis.important_dates?.forEach((d) => {
-        if (d.daysUntil >= 0 && d.daysUntil < minDays) {
+        if (d.daysUntil !== null && d.daysUntil >= 0 && d.daysUntil < minDays) {
           minDays = d.daysUntil;
           soonestExpiry = d.date;
         }
       });
       data.analysis.payment_schedule?.forEach((p) => {
-        if (p.daysUntil >= 0 && p.daysUntil < minDays) {
+        if (p.daysUntil !== null && p.daysUntil >= 0 && p.daysUntil < minDays) {
           minDays = p.daysUntil;
           soonestExpiry = p.due_date;
         }
