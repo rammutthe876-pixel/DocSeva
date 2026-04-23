@@ -9,6 +9,7 @@ import { computeDaysUntil } from "@/lib/utils";
 import type { StoredDocument, Folder } from "@/lib/types";
 import { InteractiveFolder } from "@/components/InteractiveFolder";
 import { ReminderPanel } from "@/components/ReminderPanel";
+import { ExpiryAlerts } from "@/components/ExpiryAlerts";
 import { Plus, Trash2, Edit2, X, Check, FileText } from "lucide-react";
 
 export default function VaultPage() {
@@ -91,7 +92,11 @@ export default function VaultPage() {
           </Link>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        <div className="mt-10">
+          <ExpiryAlerts />
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-textSecondary">Total documents</p>
             <p className="mt-2 text-4xl font-semibold text-textPrimary">{documents.length}</p>

@@ -194,3 +194,33 @@ export function updateDocument(id: string, updates: Partial<StoredDocument>): vo
 
   writeVault(documents);
 }
+export function getExpiringDocuments() {
+  const docs = getAllDocuments();
+  const today = new Date();
+  const next7Days = new Date();
+  next7Days.setDate(today.getDate() + 7);
+
+  return docs
+    .map((doc) => {
+      if (!doc.soonestExpiry) return null;
+      const expiryDate = new Date(doc.soonestExpiry);
+      const isExpired = expiryDate < today;
+      const isExpiringSoon = expiryDate <= next7Days && !isExpired;
+
+      if (isExpired || isExpiringSoon) {
+        return {
+          ...doc,
+          expiryStatus: isExpired ? "expired" : ("expiring" as const),
+          daysRemaining: Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        };
+      }
+      return null;
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null)
+    .sort((a, b) => {
+      // Expired first, then nearest expiry
+      if (a.expiryStatus === "expired" && b.expiryStatus !== "expired") return -1;
+      if (a.expiryStatus !== "expired" && b.expiryStatus === "expired") return 1;
+      return new Date(a.soonestExpiry!).getTime() - new Date(b.soonestExpiry!).getTime();
+    });
+}
