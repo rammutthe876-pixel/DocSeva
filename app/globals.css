@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --brand: #1a56db;
+  --surface: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+* {
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+button,
+select,
+input,
+a {
+  min-height: 44px;
+}
+
+input::placeholder {
+  color: #94a3b8;
+}
+
+::selection {
+  background: #1a56db;
+  color: #ffffff;
+}
