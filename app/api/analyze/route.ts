@@ -150,11 +150,17 @@ function normalizeAnalysis(raw: Record<string, unknown>): DocumentAnalysis {
 
 async function generateGeminiContent(apiKey: string, base64: string, promptText: string, isJson: boolean) {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelNames = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest"];
+  // Exhaustive list of potential model names to handle different region/account restrictions
+  const modelNames = [
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-pro",
+    "gemini-1.5-pro-latest",
+    "gemini-pro"
+  ];
   let lastError: any;
 
   for (const modelName of modelNames) {
-    // Try with and without JSON response configuration
     const configs = isJson ? [{ responseMimeType: "application/json" }, {}] : [{}];
     
     for (const config of configs) {
@@ -174,8 +180,7 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
           }
         ];
 
-        // Try up to 3 times for each configuration (503s are common during demos)
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
           try {
             const result = await model.generateContent(prompt);
             const response = result.response;
@@ -186,21 +191,20 @@ async function generateGeminiContent(apiKey: string, base64: string, promptText:
             lastError = error;
             const msg = error.message || "";
             if (msg.includes("503") || msg.includes("Service Unavailable") || msg.includes("overloaded")) {
-              console.warn(`Gemini ${modelName} overloaded, retrying... (${i + 1}/3)`);
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await new Promise(resolve => setTimeout(resolve, 1500));
               continue;
             }
-            throw error; // If not 503, try next config/model
+            // If it's a 404 or other non-retryable error, try next config/model
+            break; 
           }
         }
       } catch (error: any) {
         lastError = error;
-        console.warn(`Model ${modelName} with config ${JSON.stringify(config)} failed, trying next...`, error.message);
         continue;
       }
     }
   }
-  throw new Error(`Critical: All Gemini models and configurations failed. Please check your API key or try again in a moment. Last error: ${lastError?.message || "Unknown"}`);
+  throw new Error(`Gemini failure: ${lastError?.message || "Unknown error"}. Please ensure your API key supports Gemini 1.5 models.`);
 }
 
 export async function POST(request: Request) {

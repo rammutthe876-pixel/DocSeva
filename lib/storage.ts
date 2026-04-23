@@ -113,18 +113,29 @@ function computeSoonestExpiry(dates: ExtractedDate[], reminders?: DocumentRemind
 }
 
 function withComputedFields(doc: StoredDocument): StoredDocument {
-  const importantDates = (doc.analysis.importantDates ?? []).map((item) => ({
+  const important_dates = (doc.analysis.important_dates ?? []).map((item) => ({
     ...item,
     daysUntil: computeDaysUntil(item.date)
   }));
+
+  const payment_schedule = (doc.analysis.payment_schedule ?? []).map((item) => ({
+    ...item,
+    daysUntil: computeDaysUntil(item.due_date)
+  }));
+
+  const combinedDatesForExpiry = [
+    ...important_dates,
+    ...payment_schedule.map(p => ({ date: p.due_date }))
+  ];
 
   return {
     ...doc,
     analysis: {
       ...doc.analysis,
-      importantDates
+      important_dates,
+      payment_schedule
     },
-    soonestExpiry: computeSoonestExpiry(importantDates, doc.reminders)
+    soonestExpiry: computeSoonestExpiry(combinedDatesForExpiry as any, doc.reminders)
   };
 }
 
